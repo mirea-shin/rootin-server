@@ -2006,25 +2006,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rootin-server@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "rootin-server@workspace:."
-  dependencies:
-    "@prisma/client": "npm:^7.2.0"
-    "@types/cors": "npm:^2"
-    "@types/express": "npm:^5"
-    "@types/node": "npm:^25.0.3"
-    cors: "npm:^2.8.5"
-    dayjs: "npm:^1.11.19"
-    dotenv: "npm:^17.2.3"
-    express: "npm:^5.2.1"
-    nodemon: "npm:^3.1.11"
-    prisma: "npm:^7.2.0"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.9.3"
-  languageName: unknown
-  linkType: soft
-
 "router@npm:^2.2.0":
   version: 2.2.0
   resolution: "router@npm:2.2.0"
@@ -2091,6 +2072,25 @@ __metadata:
   checksum: 10c0/37986096e8572e2dfaad35a3925fa8da0c0969f8814fd7788e84d4d388bc068cf0c06d1658509788e55bed942a6b6d040a8a267fa92bb9ffb1179f8bacde5fd7
   languageName: node
   linkType: hard
+
+"server@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "server@workspace:."
+  dependencies:
+    "@prisma/client": "npm:^7.2.0"
+    "@types/cors": "npm:^2"
+    "@types/express": "npm:^5"
+    "@types/node": "npm:^25.0.3"
+    cors: "npm:^2.8.5"
+    dayjs: "npm:^1.11.19"
+    dotenv: "npm:^17.2.3"
+    express: "npm:^5.2.1"
+    nodemon: "npm:^3.1.11"
+    prisma: "npm:^7.2.0"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.9.3"
+  languageName: unknown
+  linkType: soft
 
 "setprototypeof@npm:~1.2.0":
   version: 1.2.0
