@@ -1,54 +1,17 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    // File Layout
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "rootDir": "./src",
     "outDir": "./dist",
-    "baseUrl": ".", // 기준 경로를 프로젝트 루트로 설정
-    "paths": {
-      "@/*": ["src/*"] // @/로 시작하면 src/ 폴더 안을 봐라
-    },
-
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
-    "moduleResolution": "nodenext", // 이 부분이 명시되어 있어야 합니다.
-    "target": "esnext",
-    "types": [],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
-
-    // Stricter Typechecking Options
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-
-    // Recommended Options
     "strict": true,
-    "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
     "moduleDetection": "force",
-
-    /* 호환성 및 편의성 */
-    "esModuleInterop": true /* import express from 'express' 가능하게 함 */,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-
-    /*  빌드 관련  */
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true
+    "isolatedModules": true
   },
-  "include": ["src/**/*"] /* src 폴더 내 모든 파일 포함 */,
-  "exclude": ["node_modules"] /* 라이브러리 폴더 제외 */
+  "include": ["src/**/*"]
 }
