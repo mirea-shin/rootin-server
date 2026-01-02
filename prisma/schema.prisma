@@ -49,5 +49,5 @@ model TaskLog {
   id             Int      @id @default(autoincrement())
   task_id        Int
   task           Task     @relation(fields: [task_id], references: [id], onDelete: Cascade)
-  completed_date DateTime
+  completed_date DateTime @default(now()) 
 }
