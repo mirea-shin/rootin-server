@@ -1,5 +1,11 @@
 import { prisma } from './lib/prisma';
 
+// todo tasklog가 없을 경우
+
+interface Response {
+  success: boolean;
+}
+
 export const findAllRoutines = async () => {
   try {
     const routines = await prisma.routine.findMany({
@@ -40,7 +46,6 @@ export const findRoutineById = async () => {
             id: true,
             name: true,
             sort_order: true,
-            // task와 연결된 logs를 가져옵니다.
             logs: {
               orderBy: {
                 completed_date: 'desc', // 가장 최근 로그부터
@@ -66,6 +71,8 @@ export const findRoutineById = async () => {
       };
     });
 
+    console.log('*** task log maps ***');
+    console.log(taskLogMaps);
     const daily_status = Array.from(
       { length: routine.duration_days },
       (_, i) => {
@@ -92,21 +99,13 @@ export const findRoutineById = async () => {
   }
 };
 
-export const createRoutine = async () => {
+export const createRoutine = async (parsedroutine: any) => {
   try {
-    const tasks = [
-      { name: '12시간 공복 유지', sort_order: 1 },
-      { name: '유산소운동', sort_order: 2 },
-    ];
-
     const routine = await prisma.routine.create({
       data: {
-        title: '다이어트',
-        duration_days: 90,
-        description: '90일이내로 다이어트를 하는거야아',
-        user_id: 1,
+        ...parsedroutine,
         tasks: {
-          create: tasks.map((task) => ({
+          create: parsedroutine.tasks.map((task) => ({
             name: task.name,
             sort_order: task.sort_order,
           })),
@@ -114,8 +113,31 @@ export const createRoutine = async () => {
       },
     });
 
-    return { ...routine };
+    return routine;
   } catch (err) {
     console.log(err);
+  }
+};
+
+export const deleteRoutine = async (routineId: string): Promise<Response> => {
+  try {
+    // 1. 루틴 존재 여부 및 소유권 확인 (보안상 중요)
+    const routine = await prisma.routine.findFirst({
+      where: { id: Number(routineId), user_id: 1 },
+    });
+
+    if (!routine) {
+      throw new Error('삭제할 루틴을 찾을 수 없거나 권한이 없습니다.');
+    }
+
+    // 2. 삭제 실행 (이 명령 하나로 하위 Task, TaskLog가 모두 삭제됨)
+    await prisma.routine.delete({
+      where: { id: Number(routineId) },
+    });
+
+    return { success: true };
+  } catch (err) {
+    console.log(err);
+    return { success: false };
   }
 };
