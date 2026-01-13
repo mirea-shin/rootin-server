@@ -8,9 +8,12 @@ export const toggleTaskLog = async ({
   date: string;
 }) => {
   try {
+    const targetDate = new Date(date);
+
     const completeedTask = await prisma.taskLog.findFirst({
       where: {
         task_id: taskId,
+        completed_date: targetDate,
       },
     });
 
@@ -20,7 +23,6 @@ export const toggleTaskLog = async ({
       });
       return { is_completed: false, message: '체크 해제되었습니다.' };
     } else {
-      const targetDate = new Date(date);
       await prisma.taskLog.create({
         data: {
           task_id: taskId,

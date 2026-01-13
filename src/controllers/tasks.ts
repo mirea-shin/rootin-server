@@ -7,7 +7,6 @@ export const handleTaskToggle = async (req: Request, res: Response) => {
     const { taskId } = req.params;
     const { date } = req.body;
 
-    console.log(date);
     const result = await tasksRepository.toggleTaskLog({
       taskId: Number(taskId),
       date,
