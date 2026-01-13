@@ -4,7 +4,7 @@ import cors from 'cors';
 // route
 import authRoute from './routes/auth';
 import routinesRoute from './routes/routines';
-import taskRoute from './routes/task';
+import tasksRoute from './routes/tasks';
 import taskLogRoute from './routes/taskLog';
 
 const app = express();
@@ -14,7 +14,7 @@ app.use(express.json());
 
 app.use('/auth', authRoute);
 app.use('/routines', routinesRoute);
-app.use('/tasks', taskRoute);
+app.use('/tasks', tasksRoute);
 app.use('/task-logs', taskLogRoute);
 
 app.listen(3000, () => {

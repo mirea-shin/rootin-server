@@ -14,9 +14,13 @@ export const getAllRoutines = async (req: Request, res: Response) => {
 
 export const getRoutine = async (req: Request, res: Response) => {
   try {
-    const result = await routinesRepository.findRoutineById();
+    const { id } = req.params;
 
-    res.status(200).json(result);
+    const result = await routinesRepository.findRoutineById({
+      routineId: Number(id),
+    });
+
+    result ? res.status(200).json(result) : res.send(404);
   } catch (err) {
     console.log('routine - get error');
   }

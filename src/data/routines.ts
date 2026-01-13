@@ -28,12 +28,12 @@ export const findAllRoutines = async () => {
   }
 };
 
-export const findRoutineById = async () => {
+export const findRoutineById = async ({ routineId }: { routineId: number }) => {
   try {
     const routine = await prisma.routine.findFirst({
       where: {
         user_id: 1,
-        id: 1,
+        id: routineId,
       },
       select: {
         id: true,
