@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 
 import * as routinesRepository from '../data/routines';
 
+// 에러처리
+// id가 유효하지 않을 경우 : getRoutine, updateRoutine, deleteRoutine
+
 export const getAllRoutines = async (req: Request, res: Response) => {
   try {
     const result = await routinesRepository.findAllRoutines();
@@ -39,10 +42,28 @@ export const createRoutine = async (req: Request, res: Response) => {
   }
 };
 
+export const updateRoutine = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { routine } = req.body;
+
+    if (!id) return res.send(400);
+
+    const updatedRoutine = await routinesRepository.updateRoutine({
+      id: Number(id),
+      parsedroutine: routine,
+    });
+
+    return res.status(201).json(updatedRoutine);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 export const deleteRoutine = async (req: Request, res: Response) => {
   try {
-    const { params } = req;
-    const { success } = await routinesRepository.deleteRoutine(params.id);
+    const { id } = req.params;
+    const { success } = await routinesRepository.deleteRoutine(id);
 
     if (success) res.send(204);
   } catch (err) {

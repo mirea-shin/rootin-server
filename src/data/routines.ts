@@ -119,6 +119,70 @@ export const createRoutine = async (parsedroutine: any) => {
   }
 };
 
+export const updateRoutine = async ({
+  id,
+  parsedroutine,
+}: {
+  id: number;
+  parsedroutine: any;
+}) => {
+  try {
+    const { tasks, description, title } = parsedroutine;
+
+    return await prisma.$transaction(async (tx) => {
+      await tx.routine.update({
+        where: {
+          id,
+          user_id: 1,
+        },
+        data: {
+          title,
+          description,
+        },
+      });
+
+      const tasksWithId = tasks.filter((t: any) => t.id); // 기존에 있던 태스크
+      const tasksWithoutId = tasks.filter((t: any) => !t.id); // 새로 추가된 태스크
+
+      const activeTaskIds = tasksWithId.map((t: any) => t.id);
+      // 사라진 테스크 삭제
+      await tx.task.deleteMany({
+        where: {
+          routine_id: id,
+          id: { notIn: activeTaskIds },
+        },
+      });
+
+      // 기존 테스크 업데이트
+      for (const task of tasksWithId) {
+        await tx.task.update({
+          where: { id: task.id },
+          data: {
+            name: task.name,
+            sort_order: task.sort_order,
+          },
+        });
+      }
+
+      // 새로운 테스크 등록
+      if (tasksWithoutId.length > 0) {
+        await tx.task.createMany({
+          data: tasksWithoutId.map((t) => ({
+            routine_id: id,
+            name: t.name,
+            sort_order: t.sort_order,
+          })),
+        });
+      }
+
+      return { sucess: true };
+    });
+    // return routine;
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 export const deleteRoutine = async (routineId: string): Promise<Response> => {
   try {
     // 1. 루틴 존재 여부 및 소유권 확인 (보안상 중요)
