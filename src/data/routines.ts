@@ -1,38 +1,71 @@
 import { prisma } from './lib/prisma';
 
-// todo tasklog가 없을 경우
-
 interface Response {
   success: boolean;
 }
 
-export const findAllRoutines = async () => {
+export const findAllRoutines = async (currentUserId: number) => {
   try {
     const routines = await prisma.routine.findMany({
       where: {
-        user_id: 1,
+        user_id: currentUserId,
       },
       select: {
         id: true,
         title: true,
         start_date: true,
+        duration_days: true,
         _count: {
           select: { tasks: true },
+        },
+        tasks: {
+          select: {
+            id: true,
+            logs: {
+              select: { completed_date: true },
+            },
+          },
         },
       },
     });
 
-    return routines;
+    return routines.map(({ tasks, ...routine }) => {
+      const totalSlots = routine.duration_days * tasks.length;
+
+      const end_date = new Date(routine.start_date);
+      end_date.setDate(end_date.getDate() + routine.duration_days);
+
+      if (totalSlots === 0) {
+        return { ...routine, end_date, completion_rate: 0 };
+      }
+
+      const completedSlots = tasks.reduce(
+        (sum, task) => sum + task.logs.length,
+        0,
+      );
+
+      return {
+        ...routine,
+        end_date,
+        completion_rate: Math.round((completedSlots / totalSlots) * 100),
+      };
+    });
   } catch (err) {
     console.log(err);
   }
 };
 
-export const findRoutineById = async ({ routineId }: { routineId: number }) => {
+export const findRoutineById = async ({
+  routineId,
+  user_id,
+}: {
+  routineId: number;
+  user_id: string;
+}) => {
   try {
     const routine = await prisma.routine.findFirst({
       where: {
-        user_id: 1,
+        user_id: Number(user_id),
         id: routineId,
       },
       select: {
@@ -71,8 +104,6 @@ export const findRoutineById = async ({ routineId }: { routineId: number }) => {
       };
     });
 
-    console.log('*** task log maps ***');
-    console.log(taskLogMaps);
     const daily_status = Array.from(
       { length: routine.duration_days },
       (_, i) => {

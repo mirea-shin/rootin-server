@@ -8,13 +8,15 @@ import {
   updateRoutine,
 } from '../controllers/routines';
 
+import { authMe } from '../middlewares/auth';
+
 const routinesRoute = express().router;
 
-routinesRoute.get('/', getAllRoutines);
-routinesRoute.get('/:id', getRoutine);
+routinesRoute.get('/', authMe, getAllRoutines);
+routinesRoute.get('/:id', authMe, getRoutine);
 
-routinesRoute.post('/', createRoutine);
-routinesRoute.patch('/:id', updateRoutine);
-routinesRoute.delete('/:id', deleteRoutine);
+routinesRoute.post('/', authMe, createRoutine);
+routinesRoute.patch('/:id', authMe, updateRoutine);
+routinesRoute.delete('/:id', authMe, deleteRoutine);
 
 export default routinesRoute;

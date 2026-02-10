@@ -7,7 +7,13 @@ import * as routinesRepository from '../data/routines';
 
 export const getAllRoutines = async (req: Request, res: Response) => {
   try {
-    const result = await routinesRepository.findAllRoutines();
+    // const
+    const currentUserId = req?.user?.user_id;
+    if (!currentUserId) throw new Error('유저 아이디 못찾겠음');
+    const result = await routinesRepository.findAllRoutines(
+      Number(currentUserId),
+    );
+
     res.status(200).json({ routines: result });
     console.log(res);
   } catch (err) {
@@ -18,9 +24,13 @@ export const getAllRoutines = async (req: Request, res: Response) => {
 export const getRoutine = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const { user } = req;
+
+    if (!user) console.log('something 처리 ');
 
     const result = await routinesRepository.findRoutineById({
       routineId: Number(id),
+      user_id: user?.user_id,
     });
 
     result ? res.status(200).json(result) : res.send(404);
