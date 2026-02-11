@@ -7,15 +7,22 @@ import * as routinesRepository from '../data/routines';
 
 export const getAllRoutines = async (req: Request, res: Response) => {
   try {
-    // const
     const currentUserId = req?.user?.user_id;
     if (!currentUserId) throw new Error('유저 아이디 못찾겠음');
+
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(20, Math.max(1, Number(req.query.limit) || 6));
+    const filter =
+      req.query.filter === 'completed' ? 'completed' : 'active';
+
     const result = await routinesRepository.findAllRoutines(
       Number(currentUserId),
+      page,
+      limit,
+      filter,
     );
 
-    res.status(200).json({ routines: result });
-    console.log(res);
+    res.status(200).json(result);
   } catch (err) {
     console.log('routine - get error');
   }

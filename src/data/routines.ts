@@ -4,12 +4,16 @@ interface Response {
   success: boolean;
 }
 
-export const findAllRoutines = async (currentUserId: number) => {
+export const findAllRoutines = async (
+  currentUserId: number,
+  page: number = 1,
+  limit: number = 6,
+  filter: 'active' | 'completed' = 'active',
+) => {
   try {
     const routines = await prisma.routine.findMany({
-      where: {
-        user_id: currentUserId,
-      },
+      where: { user_id: currentUserId },
+      orderBy: { start_date: 'desc' },
       select: {
         id: true,
         title: true,
@@ -29,27 +33,51 @@ export const findAllRoutines = async (currentUserId: number) => {
       },
     });
 
-    return routines.map(({ tasks, ...routine }) => {
+    const now = new Date();
+
+    const mapped = routines.map(({ tasks, ...routine }) => {
       const totalSlots = routine.duration_days * tasks.length;
 
       const end_date = new Date(routine.start_date);
       end_date.setDate(end_date.getDate() + routine.duration_days);
-
-      if (totalSlots === 0) {
-        return { ...routine, end_date, completion_rate: 0 };
-      }
 
       const completedSlots = tasks.reduce(
         (sum, task) => sum + task.logs.length,
         0,
       );
 
-      return {
-        ...routine,
-        end_date,
-        completion_rate: Math.round((completedSlots / totalSlots) * 100),
-      };
+      const completion_rate =
+        totalSlots === 0
+          ? 0
+          : Math.round((completedSlots / totalSlots) * 100);
+
+      const isCompleted = completion_rate === 100 || now > end_date;
+
+      return { ...routine, end_date, completion_rate, isCompleted };
     });
+
+    const activeRoutines = mapped.filter((r) => !r.isCompleted);
+    const completedRoutines = mapped.filter((r) => r.isCompleted);
+
+    const filtered =
+      filter === 'completed' ? completedRoutines : activeRoutines;
+
+    const skip = (page - 1) * limit;
+    const paginated = filtered.slice(skip, skip + limit);
+
+    return {
+      routines: paginated,
+      pagination: {
+        total: filtered.length,
+        page,
+        limit,
+        totalPages: Math.ceil(filtered.length / limit),
+      },
+      counts: {
+        active: activeRoutines.length,
+        completed: completedRoutines.length,
+      },
+    };
   } catch (err) {
     console.log(err);
   }
