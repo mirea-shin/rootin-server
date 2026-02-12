@@ -9,11 +9,19 @@ export const findAllRoutines = async (
   page: number = 1,
   limit: number = 6,
   filter: 'active' | 'completed' = 'active',
+  sort: 'newest' | 'oldest' | 'name' = 'newest',
 ) => {
   try {
+    const orderBy =
+      sort === 'name'
+        ? { title: 'asc' as const }
+        : sort === 'oldest'
+          ? { start_date: 'asc' as const }
+          : { start_date: 'desc' as const };
+
     const routines = await prisma.routine.findMany({
       where: { user_id: currentUserId },
-      orderBy: { start_date: 'desc' },
+      orderBy,
       select: {
         id: true,
         title: true,
@@ -152,7 +160,23 @@ export const findRoutineById = async ({
       },
     );
 
-    return { ...routine, daily_status };
+    const end_date = new Date(routine.start_date);
+    end_date.setDate(end_date.getDate() + routine.duration_days);
+
+    const totalSlots = routine.duration_days * tasks.length;
+    const completedSlots = tasks.reduce(
+      (sum, task) => sum + task.logs.length,
+      0,
+    );
+    const completion_rate =
+      totalSlots === 0
+        ? 0
+        : Math.round((completedSlots / totalSlots) * 100);
+
+    const now = new Date();
+    const isCompleted = completion_rate === 100 || now > end_date;
+
+    return { ...routine, daily_status, end_date, completion_rate, isCompleted };
   } catch (err) {
     console.log(err);
   }

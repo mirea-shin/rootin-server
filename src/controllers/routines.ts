@@ -14,12 +14,16 @@ export const getAllRoutines = async (req: Request, res: Response) => {
     const limit = Math.min(20, Math.max(1, Number(req.query.limit) || 6));
     const filter =
       req.query.filter === 'completed' ? 'completed' : 'active';
+    const sortParam = req.query.sort as string;
+    const sort =
+      sortParam === 'oldest' || sortParam === 'name' ? sortParam : 'newest';
 
     const result = await routinesRepository.findAllRoutines(
       Number(currentUserId),
       page,
       limit,
       filter,
+      sort,
     );
 
     res.status(200).json(result);
