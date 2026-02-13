@@ -1,65 +1,120 @@
 import { Request, Response } from 'express';
 
 import * as routinesRepository from '../data/routines';
+import { handleError, getUserId } from '../utils/controller';
+import {
+  enrichRoutineSummary,
+  enrichRoutineDetail,
+  calcTodaySummary,
+  paginate,
+} from '../utils/routines';
 
-// 에러처리
-// id가 유효하지 않을 경우 : getRoutine, updateRoutine, deleteRoutine
+const ORDER_BY_MAP = {
+  name: { title: 'asc' },
+  oldest: { start_date: 'asc' },
+  newest: { start_date: 'desc' },
+} as const;
+
+const parseListQuery = (query: Request['query']) => {
+  const page = Math.max(1, Number(query.page) || 1);
+  const limit = Math.min(20, Math.max(1, Number(query.limit) || 6));
+  const filter =
+    query.filter === 'completed' ? 'completed' : 'active';
+  const sortParam = query.sort as string;
+  const sort =
+    sortParam === 'oldest' || sortParam === 'name'
+      ? sortParam
+      : 'newest';
+
+  return { page, limit, filter, sort } as const;
+};
 
 export const getAllRoutines = async (req: Request, res: Response) => {
   try {
-    const currentUserId = req?.user?.user_id;
-    if (!currentUserId) throw new Error('유저 아이디 못찾겠음');
+    const currentUserId = getUserId(req);
+    const { page, limit, filter, sort } = parseListQuery(req.query);
 
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(20, Math.max(1, Number(req.query.limit) || 6));
-    const filter =
-      req.query.filter === 'completed' ? 'completed' : 'active';
-    const sortParam = req.query.sort as string;
-    const sort =
-      sortParam === 'oldest' || sortParam === 'name' ? sortParam : 'newest';
-
-    const result = await routinesRepository.findAllRoutines(
-      Number(currentUserId),
-      page,
-      limit,
-      filter,
-      sort,
+    const orderBy = ORDER_BY_MAP[sort] as {
+      [key: string]: 'asc' | 'desc';
+    };
+    const routines = await routinesRepository.findAllRoutines(
+      currentUserId,
+      orderBy,
     );
 
-    res.status(200).json(result);
+    const mapped = routines.map(enrichRoutineSummary);
+    const activeRoutines = mapped.filter((r) => !r.isCompleted);
+    const completedRoutines = mapped.filter((r) => r.isCompleted);
+    const filtered =
+      filter === 'completed' ? completedRoutines : activeRoutines;
+
+    const { data, pagination } = paginate(filtered, page, limit);
+
+    return res.status(200).json({
+      routines: data,
+      pagination,
+      counts: {
+        active: activeRoutines.length,
+        completed: completedRoutines.length,
+      },
+    });
   } catch (err) {
-    console.log('routine - get error');
+    return handleError(res, err);
+  }
+};
+
+export const getTodaySummary = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const currentUserId = getUserId(req);
+    const routines =
+      await routinesRepository.findActiveRoutinesWithTodayLogs(
+        currentUserId,
+      );
+
+    return res.status(200).json(calcTodaySummary(routines));
+  } catch (err) {
+    return handleError(res, err);
   }
 };
 
 export const getRoutine = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { user } = req;
+    const currentUserId = getUserId(req);
 
-    if (!user) console.log('something 처리 ');
-
-    const result = await routinesRepository.findRoutineById({
+    const routine = await routinesRepository.findRoutineById({
       routineId: Number(id),
-      user_id: user?.user_id,
+      user_id: String(currentUserId),
     });
 
-    result ? res.status(200).json(result) : res.send(404);
+    if (!routine)
+      throw new Error(
+        'RoutineNotFound:해당 루틴을 찾을 수 없습니다.',
+      );
+
+    return res.status(200).json(enrichRoutineDetail(routine));
   } catch (err) {
-    console.log('routine - get error');
+    return handleError(res, err);
   }
 };
 
 export const createRoutine = async (req: Request, res: Response) => {
   try {
     const { routine } = req.body;
-    if (!routine) throw new Error('routine req.body를 찾을 수 없읍니다');
+    getUserId(req);
 
-    const createdRoutine = await routinesRepository.createRoutine(routine);
+    if (!routine)
+      throw new Error('BadRequest:루틴 데이터가 누락되었습니다.');
 
-    res.status(201).json({ routine: { ...createdRoutine } });
+    const createdRoutine =
+      await routinesRepository.createRoutine(routine);
+
+    return res.status(201).json({ routine: { ...createdRoutine } });
   } catch (err) {
-    console.log('routine - create error');
+    return handleError(res, err);
   }
 };
 
@@ -67,27 +122,37 @@ export const updateRoutine = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { routine } = req.body;
+    const currentUserId = getUserId(req);
 
-    if (!id) return res.send(400);
+    if (!id || !routine)
+      throw new Error(
+        'BadRequest:루틴 ID 또는 수정 데이터가 누락되었습니다.',
+      );
 
-    const updatedRoutine = await routinesRepository.updateRoutine({
+    await routinesRepository.updateRoutine({
       id: Number(id),
       parsedroutine: routine,
+      user_id: currentUserId,
     });
 
-    return res.status(201).json(updatedRoutine);
+    return res.status(200).json({ success: true });
   } catch (err) {
-    console.error(err);
+    return handleError(res, err);
   }
 };
 
 export const deleteRoutine = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { success } = await routinesRepository.deleteRoutine(id);
+    const currentUserId = getUserId(req);
 
-    if (success) res.send(204);
+    await routinesRepository.deleteRoutine({
+      routineId: id,
+      user_id: currentUserId,
+    });
+
+    return res.status(204).send();
   } catch (err) {
-    console.log('routine - delete error');
+    return handleError(res, err);
   }
 };

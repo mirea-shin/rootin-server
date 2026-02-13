@@ -1,14 +1,6 @@
 import { prisma } from './lib/prisma';
 import { Prisma } from '../generated/prisma';
-
-type SignUp = Login & {
-  nickname: string;
-};
-
-interface Login {
-  email: string;
-  password: string;
-}
+import { SignUp } from '../types/auth';
 
 export const createUser = async (user: SignUp) => {
   try {

@@ -43,12 +43,14 @@ export const createToken = (tokenKey: { user_id: number; email: string }) => {
 
 export const validateToken = async (token: string) => {
   try {
-    const data = jwt.verify(token, config.auth.jwtSecret);
-    if (!data) throw new Error('InvaildToken');
+    const decoded = jwt.verify(token, config.auth.jwtSecret) as {
+      data: { user_id: number; email: string };
+    };
+    if (!decoded) throw new Error('InvalidToken');
 
-    return data;
+    return decoded;
   } catch (err) {
     console.error('JWT 에러:', err);
-    throw new Error('InvaildToken');
+    throw new Error('InvalidToken');
   }
 };
