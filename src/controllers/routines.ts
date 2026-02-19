@@ -5,7 +5,7 @@ import { handleError, getUserId } from '../utils/controller';
 import {
   enrichRoutineSummary,
   enrichRoutineDetail,
-  calcTodaySummary,
+  calcOverallSummary,
   paginate,
 } from '../utils/routines';
 
@@ -63,18 +63,18 @@ export const getAllRoutines = async (req: Request, res: Response) => {
   }
 };
 
-export const getTodaySummary = async (
+export const getOverallSummary = async (
   req: Request,
   res: Response,
 ) => {
   try {
     const currentUserId = getUserId(req);
     const routines =
-      await routinesRepository.findActiveRoutinesWithTodayLogs(
+      await routinesRepository.findActiveRoutinesWithLogs(
         currentUserId,
       );
 
-    return res.status(200).json(calcTodaySummary(routines));
+    return res.status(200).json(calcOverallSummary(routines));
   } catch (err) {
     return handleError(res, err);
   }

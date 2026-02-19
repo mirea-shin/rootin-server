@@ -63,23 +63,11 @@ export const findRoutineById = async ({
   });
 };
 
-export const findActiveRoutinesWithTodayLogs = async (
+export const findActiveRoutinesWithLogs = async (
   userId: number,
 ) => {
-  const now = new Date();
-  const todayStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  );
-  const todayEnd = new Date(todayStart);
-  todayEnd.setDate(todayEnd.getDate() + 1);
-
   return await prisma.routine.findMany({
-    where: {
-      user_id: userId,
-      start_date: { lte: now },
-    },
+    where: { user_id: userId },
     select: {
       start_date: true,
       duration_days: true,
@@ -87,9 +75,7 @@ export const findActiveRoutinesWithTodayLogs = async (
         select: {
           id: true,
           logs: {
-            where: {
-              completed_date: { gte: todayStart, lt: todayEnd },
-            },
+            select: { completed_date: true },
           },
         },
       },

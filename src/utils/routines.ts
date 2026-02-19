@@ -1,3 +1,9 @@
+const stripTime = (date: Date): Date => {
+  const d = new Date(date);
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+};
+
 export const calcEndDate = (
   startDate: Date | string,
   durationDays: number,
@@ -10,19 +16,23 @@ export const calcEndDate = (
 export const calcCompletionRate = (
   tasks: { logs: { completed_date: Date }[] }[],
   startDate: Date | string,
-  endDate: Date,
+  _endDate: Date,
   durationDays: number,
 ): number => {
   const totalSlots = durationDays * tasks.length;
   if (totalSlots === 0) return 0;
 
-  const start = new Date(startDate);
+  const startDay = stripTime(new Date(startDate));
+  const endDay = stripTime(
+    calcEndDate(startDate, durationDays),
+  );
+
   const completedSlots = tasks.reduce(
     (sum, task) =>
       sum +
       task.logs.filter((log) => {
-        const d = new Date(log.completed_date);
-        return d >= start && d < endDate;
+        const d = stripTime(new Date(log.completed_date));
+        return d >= startDay && d < endDay;
       }).length,
     0,
   );
@@ -152,28 +162,33 @@ export const enrichRoutineDetail = <
   };
 };
 
-export const calcTodaySummary = (
+export const calcOverallSummary = (
   routines: (RoutineBase & {
     tasks: { logs: { completed_date: Date }[] }[];
   })[],
 ) => {
-  const now = new Date();
-  const active = routines.filter((r) => {
-    const end = calcEndDate(r.start_date, r.duration_days);
-    return now <= end;
-  });
+  const activeWithRates = routines
+    .map((r) => {
+      const end = calcEndDate(r.start_date, r.duration_days);
+      const rate = calcCompletionRate(
+        r.tasks,
+        r.start_date,
+        end,
+        r.duration_days,
+      );
+      return { rate, isCompleted: checkIsCompleted(rate, end) };
+    })
+    .filter(({ isCompleted }) => !isCompleted);
 
-  const totalTasks = active.reduce(
-    (sum, r) => sum + r.tasks.length,
-    0,
-  );
-  const completedTasks = active.reduce(
-    (sum, r) =>
-      sum + r.tasks.filter((t) => t.logs.length > 0).length,
-    0,
+  if (activeWithRates.length === 0)
+    return { totalRoutines: 0, averageRate: 0 };
+
+  const averageRate = Math.round(
+    activeWithRates.reduce((sum, { rate }) => sum + rate, 0) /
+      activeWithRates.length,
   );
 
-  return { totalTasks, completedTasks };
+  return { totalRoutines: activeWithRates.length, averageRate };
 };
 
 export const paginate = <T>(
