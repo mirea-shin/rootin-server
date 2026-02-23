@@ -9,7 +9,7 @@ export const calcEndDate = (
   durationDays: number,
 ): Date => {
   const end = new Date(startDate);
-  end.setDate(end.getDate() + durationDays);
+  end.setDate(end.getDate() + durationDays - 1); // inclusive last day
   return end;
 };
 
@@ -32,7 +32,7 @@ export const calcCompletionRate = (
       sum +
       task.logs.filter((log) => {
         const d = stripTime(new Date(log.completed_date));
-        return d >= startDay && d < endDay;
+        return d >= startDay && d <= endDay;
       }).length,
     0,
   );
@@ -44,7 +44,7 @@ export const checkIsCompleted = (
   completionRate: number,
   endDate: Date,
 ): boolean => {
-  return completionRate === 100 || new Date() > endDate;
+  return completionRate === 100 || stripTime(new Date()) > stripTime(endDate);
 };
 
 export const buildDailyStatus = (
