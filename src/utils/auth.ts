@@ -2,26 +2,13 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import config from './config';
 
-const createSalt = async () =>
-  await bcrypt.genSalt(config.auth.saltRound);
-
-export const comparePwd = async (pwd: string, hashedPwd: string) => {
-  try {
-    const checked = await bcrypt.compare(pwd, hashedPwd);
-    return checked;
-  } catch (err) {
-    console.error(err);
-  }
+export const comparePwd = async (pwd: string, hashedPwd: string): Promise<boolean> => {
+  return await bcrypt.compare(pwd, hashedPwd);
 };
 
-export const pwdToHashed = async (pwd: string) => {
-  try {
-    const salt = await createSalt();
-    const hash = await bcrypt.hash(pwd, salt);
-    return hash;
-  } catch (err) {
-    console.error(err, '해시 함수에서 에러발생');
-  }
+export const pwdToHashed = async (pwd: string): Promise<string> => {
+  const salt = await bcrypt.genSalt(config.auth.saltRound);
+  return await bcrypt.hash(pwd, salt);
 };
 
 export const createToken = (tokenKey: { user_id: number; email: string }) => {

@@ -104,13 +104,21 @@ export const getRoutine = async (req: Request, res: Response) => {
 export const createRoutine = async (req: Request, res: Response) => {
   try {
     const { routine } = req.body;
-    getUserId(req);
+    const currentUserId = getUserId(req);
 
     if (!routine)
       throw new Error('BadRequest:루틴 데이터가 누락되었습니다.');
 
-    const createdRoutine =
-      await routinesRepository.createRoutine(routine);
+    // 클라이언트 body의 user_id를 신뢰하지 않고 JWT에서 추출한 값으로 강제 설정
+    const { title, description, duration_days, start_date, tasks } = routine;
+    const createdRoutine = await routinesRepository.createRoutine({
+      title,
+      description,
+      duration_days,
+      start_date,
+      tasks,
+      user_id: currentUserId,
+    });
 
     return res.status(201).json({ routine: { ...createdRoutine } });
   } catch (err) {

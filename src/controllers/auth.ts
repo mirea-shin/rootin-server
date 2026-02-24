@@ -7,16 +7,18 @@ export const signup = async (req: Request, res: Response) => {
   try {
     const { user: parsedUser } = req.body;
 
-    if (!parsedUser || !parsedUser.email || !parsedUser.password)
+    if (!parsedUser || !parsedUser.email || !parsedUser.password || !parsedUser.nickname)
       throw new Error(
-        'BadRequest:필수 항목(이메일, 비밀번호 등)이 누락되었습니다.',
+        'BadRequest:필수 항목(이메일, 비밀번호, 닉네임)이 누락되었습니다.',
       );
 
     const hasedPwd = await pwdToHashed(parsedUser.password);
 
+    // 허용된 필드만 명시적으로 추출하여 전달 (의도치 않은 필드 차단)
     const createdUser = await authRepository.createUser({
-      ...parsedUser,
+      email: parsedUser.email,
       password: hasedPwd,
+      nickname: parsedUser.nickname,
     });
 
     const { id, email, nickname } = createdUser;

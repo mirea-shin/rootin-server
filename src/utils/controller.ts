@@ -26,6 +26,11 @@ const ERROR_MAP: Record<string, { status: number; error: string; message: string
     error: 'Not Found',
     message: '루틴을 찾을 수 없거나 권한이 없습니다.',
   },
+  TaskNotFound: {
+    status: 404,
+    error: 'Not Found',
+    message: '태스크를 찾을 수 없거나 권한이 없습니다.',
+  },
 };
 
 const INTERNAL_ERROR = {

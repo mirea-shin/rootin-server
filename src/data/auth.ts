@@ -21,12 +21,5 @@ export const createUser = async (user: SignUp) => {
 };
 
 export const findUserByEmail = async (email: string) => {
-  try {
-    const foundedUser = await prisma.user.findUnique({
-      where: { email },
-    });
-    return foundedUser;
-  } catch (err) {
-    console.error(err);
-  }
+  return await prisma.user.findUnique({ where: { email } });
 };
