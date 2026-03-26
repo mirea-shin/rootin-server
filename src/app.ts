@@ -10,6 +10,9 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
+// jobs
+import { startGuestCleanupJob } from './jobs/cleanupGuests';
+
 // route
 import authRoute from './routes/auth';
 import routinesRoute from './routes/routines';
@@ -50,4 +53,5 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 const PORT = Number(process.env.PORT) || 3000;
 app.listen(PORT, () => {
   console.log(`server connected on port ${PORT}`);
+  startGuestCleanupJob();
 });

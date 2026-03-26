@@ -65,7 +65,12 @@ export const getMe = async (req: Request, res: Response) => {
   try {
     const { user } = req;
     if (!user) throw new Error('UserNotFound');
-    return res.status(200).json({ user: user });
+
+    const foundUser = await authRepository.findUserById(user.user_id);
+    if (!foundUser) throw new Error('UserNotFound');
+
+    const { id, email, nickname, is_guest } = foundUser;
+    return res.status(200).json({ user: { user_id: id, email, nickname, is_guest } });
   } catch (err) {
     return handleError(res, err);
   }
